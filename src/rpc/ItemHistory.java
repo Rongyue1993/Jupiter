@@ -10,6 +10,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -38,7 +39,14 @@ public class ItemHistory extends HttpServlet {
 	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		String userId = request.getParameter("user_id");
+		HttpSession session = request.getSession(false);
+		if (session == null) {
+			response.setStatus(403);
+			return;
+		}
+
+                             
+		String userId = session.getAttribute("user_id").toString(); 
 		JSONArray array = new JSONArray();
 
 		DBConnection conn = DBConnectionFactory.getConnection();
@@ -60,9 +68,14 @@ public class ItemHistory extends HttpServlet {
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		try {
+		try {HttpSession session = request.getSession(false);
+			if (session == null) {
+				response.setStatus(403);
+				return;
+			}
+			
 			JSONObject input = RpcHelper.readJsonObject(request);
-			String userId = input.getString("user_id");
+			String userId = session.getAttribute("user_id").toString(); 
 			
 			JSONArray array = input.getJSONArray("favorite");
 			List<String> itemIds = new ArrayList<>();
@@ -73,7 +86,7 @@ public class ItemHistory extends HttpServlet {
 			conn.setFavoriteItems(userId, itemIds);
 			conn.close();
 			RpcHelper.writeJsonObject(response,
-					new JSONObject().put("retult", "SUCCESS"));
+					new JSONObject().put("result", "SUCCESS"));
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
@@ -84,8 +97,14 @@ public class ItemHistory extends HttpServlet {
 	 */
 	protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		try {
+			HttpSession session = request.getSession(false);
+			if (session == null) {
+				response.setStatus(403);
+				return;
+			}
+			
 			JSONObject input = RpcHelper.readJsonObject(request);
-			String userId = input.getString("user_id");
+			String userId = session.getAttribute("user_id").toString(); 
 			
 			JSONArray array = input.getJSONArray("favorite");
 			List<String> itemIds = new ArrayList<>();
@@ -96,7 +115,7 @@ public class ItemHistory extends HttpServlet {
 			conn.unsetFavoriteItems(userId, itemIds);
 			conn.close();
 			RpcHelper.writeJsonObject(response,
-					new JSONObject().put("retult", "SUCCESS"));
+					new JSONObject().put("result", "SUCCESS"));
 		} catch(Exception e) {
 			e.printStackTrace();
 		}

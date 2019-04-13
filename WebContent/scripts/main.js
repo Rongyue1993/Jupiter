@@ -13,15 +13,84 @@
      */
     function init() {
         // Register event listeners
-        $('nearby-btn').addEventListener('click', loadNearbyItems);
-        $('fav-btn').addEventListener('click', loadFavoriteItems);
-        $('recommend-btn').addEventListener('click', loadRecommendedItems);
+    	
+    	$('login-btn').addEventListener('click', login);
+		$('nearby-btn').addEventListener('click', loadNearbyItems);
+		$('fav-btn').addEventListener('click', loadFavoriteItems);
+		$('recommend-btn').addEventListener('click', loadRecommendedItems);
 
-        var welcomeMsg = $('welcome-msg');
-        //welcomeMsg.innerHTML = 'Welcome, ' + user_fullname;
-        welcomeMsg.innerHTML = 'Welcome, ' + 'Yangyangyang';
-        initGeoLocation();
-    }
+		validateSession();
+
+		// onSessionValid({
+		// user_id : '1111',
+		// name : 'John Smith'
+		// });
+	}
+
+	/**
+	 * Session
+	 */
+	function validateSession() {
+		// The request parameters
+		var url = './login';
+		var req = JSON.stringify({});
+
+		// display loading message
+		showLoadingMessage('Validating session...');
+
+		// make AJAX call
+		ajax('GET', url, req,
+		// session is still valid
+		function(res) {
+			var result = JSON.parse(res);
+
+			if (result.status === 'OK') {
+				onSessionValid(result);
+			}
+		});
+	}
+
+	function onSessionValid(result) {
+		user_id = result.user_id;
+		user_fullname = result.name;
+
+		var loginForm = $('login-form');
+		var itemNav = $('item-nav');
+		var itemList = $('item-list');
+		var avatar = $('avatar');
+		var welcomeMsg = $('welcome-msg');
+		var logoutBtn = $('logout-link');
+
+		//welcomeMsg.innerHTML = 'Welcome, ' + user_fullname;
+		welcomeMsg.innerHTML = 'Welcome, ' + "Rongyue Cui";
+
+		showElement(itemNav);
+		showElement(itemList);
+		showElement(avatar);
+		showElement(welcomeMsg);
+		showElement(logoutBtn, 'inline-block');
+		hideElement(loginForm);
+
+		initGeoLocation();
+	}
+
+	function onSessionInvalid() {
+		var loginForm = $('login-form');
+		var itemNav = $('item-nav');
+		var itemList = $('item-list');
+		var avatar = $('avatar');
+		var welcomeMsg = $('welcome-msg');
+		var logoutBtn = $('logout-link');
+
+		hideElement(itemNav);
+		hideElement(itemList);
+		hideElement(avatar);
+		hideElement(logoutBtn);
+		hideElement(welcomeMsg);
+
+		showElement(loginForm);
+	}
+
 
     function initGeoLocation() {
         if (navigator.geolocation) {
@@ -64,6 +133,49 @@
         });
     }
 
+    // -----------------------------------
+	// Login
+	// -----------------------------------
+
+	function login() {
+		var username = $('username').value;
+		var password = $('password').value;
+		password = md5(username + md5(password));
+
+		// The request parameters
+		var url = './login';
+		var req = JSON.stringify({
+			user_id : username,
+			password : password,
+		});
+
+		ajax('POST', url, req,
+		// successful callback
+		function(res) {
+			var result = JSON.parse(res);
+
+			// successfully logged in
+			if (result.status === 'OK') {
+				onSessionValid(result);
+			}
+		},
+
+		// error
+		function() {
+			showLoginError();
+		});
+	}
+
+	function showLoginError() {
+		$('login-error').innerHTML = 'Invalid username or password';
+	}
+
+	function clearLoginError() {
+		$('login-error').innerHTML = '';
+	}
+
+    
+    
     // -----------------------------------
     // Helper Functions
     // -----------------------------------
@@ -156,10 +268,12 @@
 
         xhr.onload = function() {
         	if (xhr.status === 200) {
-        		callback(xhr.responseText);
-        	} else {
-        		errorHandler();
-        	}
+				callback(xhr.responseText);
+			} else if (xhr.status === 403) {
+				onSessionInvalid();
+			} else {
+				errorHandler();
+			}
         };
 
         xhr.onerror = function() {

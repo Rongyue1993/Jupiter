@@ -13,11 +13,29 @@ import java.util.Set;
 import db.DBConnection;
 import db.DBConnectionFactory;
 import entity.Item;
+//collaborative filtering
+/*
+ * //users-base
+ * user A likes Item A B C D
+ * user B likes Item D 
+ * user C likes Item A B C E
+ * A and C are many in common, recommend D to user C
+ */
 
+/*
+ * item-base
+ * Item A liked by User A B C D
+ * Item B liked by User A
+ * Item C liked by User A B C E
+ * recommend item C to user D
+ */
+
+//other 
+//ML
 
 // Recommendation based on geo distance and similar categories.
 public class GeoRecommendation {
-	public List<Item> recommendItems(String userId, double lat, double lon) {
+	public List<Item> recommendItems(String userId, double lat, double lon) { //content-based recommendation
 		List<Item> recommendedItems = new ArrayList<>();
 		DBConnection conn = DBConnectionFactory.getConnection();
 		
